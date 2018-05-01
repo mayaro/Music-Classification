@@ -7,13 +7,20 @@
 import os
 import librosa
 import numpy
+import multiprocessing
 import keras
+import threading
 
-AUDIO_OFFSET = 8.0
-AUDIO_LIMIT_DURATION = 60.0
-AUDIO_SONG_SAMPLES = 660000
-FFT_WINDOW_SIZE = 2048
-HOP_LENGTH = 512
+AudioOffset = 15.0
+AudioDurationLimit = 120.0
+SongSamples = 660000
+FFTWindowSize = 2048
+HopLength = 512
+
+class Job:
+  def __init__( self, filename, genre ):
+    self.filename = filename
+    self.genre = genre
 
 class TrainingAudioData(object):
   """Class used for creating and handling audio data
@@ -33,7 +40,9 @@ class TrainingAudioData(object):
     self.directory = (directory, directory + '/')[not directory.endswith('/')]
     self.genres = {
       'metal': 0,
-      'country': 1
+      'populara': 1,
+      'reggae': 2,
+      'classical': 3
     }
 
   """Function used to get the .npy models for the training datafiles.
@@ -46,24 +55,33 @@ class TrainingAudioData(object):
     music_data = []
     genre_data = []
 
+    Jobs = multiprocessing.Queue()
+    workers = []
+
     for genre, _ in self.genres.items():
-      index = 0
       for _, _, files in os.walk(self.directory + genre):
         for file_name in files:
           full_file_name = self.directory + genre + '/' + file_name
+          Jobs.put(Job(full_file_name, self.genres[genre]))
 
-          feature = TrainingAudioData.__process_audio_file(full_file_name)
+          # feature = TrainingAudioData.process_audio_file(full_file_name)
 
-          music_data.append(feature)
-          genre_data.append(self.genres[genre])
+          # music_data.append(feature)
+          # genre_data.append(self.genres[genre])
 
-          print('Parsed audio file \'' + full_file_name + '\'.')
+          # print('Parsed audio file \'' + full_file_name + '\'.')
 
-          index += 1
+    number_of_cpus = multiprocessing.cpu_count()
+    for i in range(number_of_cpus - 1):
+      print('Starting worker %s' % i)
 
-          if index == 5:
-            index = 0
-            break
+      p = threading.Thread( target=TrainingAudioData.worker_processing, args=(i, Jobs, music_data, genre_data) )
+      workers.append(p)
+
+      p.start()
+
+    for p in workers:
+      p.join()
 
     song_data_array = numpy.array(music_data)
     genre_data_array = keras.utils.to_categorical(genre_data, len(self.genres))
@@ -72,16 +90,29 @@ class TrainingAudioData(object):
 
 
   @staticmethod
-  def __process_audio_file( file_path ):
+  def process_audio_file( file_path ):
     signal, sampling_rate = librosa.load(file_path,
-                                         offset = AUDIO_OFFSET,
-                                         duration = AUDIO_LIMIT_DURATION)
+                                         offset = AudioOffset,
+                                         duration = AudioDurationLimit)
 
     if signal.size == 0:
       print('File ' + file_path + ' could not be loaded.')
       return None
 
-    feature = librosa.feature.melspectrogram(signal[ :AUDIO_SONG_SAMPLES ], sr = sampling_rate,
-                                             n_fft = FFT_WINDOW_SIZE, hop_length = HOP_LENGTH).T[:1280, ]
+    feature = librosa.feature.melspectrogram(signal[ :SongSamples ], sr = sampling_rate,
+                                             n_fft = FFTWindowSize, hop_length = HopLength).T[:640, ]
 
     return feature
+
+  @staticmethod
+  def worker_processing( Id, Jobs, music_data, genre_data ):
+    while not Jobs.empty():
+      job = Jobs.get()
+
+      print('Worker %s got job %s' % (Id, job.filename))
+      features = TrainingAudioData.process_audio_file(job.filename)
+
+      music_data.append(features)
+      genre_data.append(job.genre)
+
+      print('Worker %s finished job %s' % (Id, job))      
