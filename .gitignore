@@ -1,4 +1,6 @@
 __pycache__/
 .idea/
 learning_data/
+raw_learning_data/
 .vscode/
+*.npy
