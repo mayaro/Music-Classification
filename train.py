@@ -16,8 +16,7 @@ GenresDataFileLocation = LearningDatasetLocation + 'genres_data.npy'
 SavedModelFileLocation = LearningDatasetLocation + 'model.json'
 SavedWeightsFileLocation = LearningDatasetLocation + 'weights.h5'
 
-ExecTimes = 150
-CNN_TYPE = '1D'
+ExecTimes = 10
 input_shape = (128, 128)
 batch_size = 100
 epochs = 100
@@ -25,15 +24,14 @@ epochs = 100
 import os
 import gc
 import numpy
-
-import matplotlib.pyplot as pyplot
-from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 import keras
 
+import matplotlib.pyplot as pyplot
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+
 from src.AudioModel import TrainingModels
-from src.AudioUtils import AudioUtils
+from src.Utils import split_songs
 
 if os.path.isfile(SoundwavesDataFileLocation) and os.path.isfile(GenresDataFileLocation):
 
@@ -54,7 +52,6 @@ print('Genres format:\t' + str(genres.shape))
 validation_accuracy = [ ]
 test_history = [ ]
 test_accuracy = [ ]
-test_accuracy_voted = [ ]
 
 for execPeriod in range(ExecTimes):
   # Split the soundwave dateset into training and test
@@ -66,12 +63,12 @@ for execPeriod in range(ExecTimes):
     inputs_train, outputs_train, test_size = 1 / 6, stratify = outputs_train)
 
   # Split the train, test and validation datasets in sizes of 128x128
-  inputs_validation, outputs_validation = AudioUtils( ).splitsongs_melspect(
-    inputs_validation, outputs_validation, CNN_TYPE)
-  inputs_test, outputs_test = AudioUtils( ).splitsongs_melspect(
-    inputs_test, outputs_test, CNN_TYPE)
-  inputs_train, outputs_train = AudioUtils( ).splitsongs_melspect(
-    inputs_train, outputs_train, CNN_TYPE)
+  inputs_validation, outputs_validation = split_songs(
+    inputs_validation, outputs_validation)
+  inputs_test, outputs_test = split_songs(
+    inputs_test, outputs_test)
+  inputs_train, outputs_train = split_songs(
+    inputs_train, outputs_train)
 
   model = TrainingModels.CNNMelspec(input_shape)
 
@@ -118,28 +115,13 @@ for execPeriod in range(ExecTimes):
     verbose = 0
   )
 
-  # Also use a majority voting system for computing accuracy
-  predicted_values = model.predict(inputs_test)
-  
-  max_predicted_values = numpy.argmax(predicted_values, axis = 1)
-  voted_truth, voted_prediction = AudioUtils().voting(numpy.argmax(outputs_test, axis = 1), max_predicted_values)
-  
-  accuracy_voted = accuracy_score(voted_truth, voted_prediction)
-
   # Save training metrics
   validation_accuracy.append(score_validation[ 1 ])
   test_accuracy.append(score[ 1 ])
   test_history.append(history)
-  test_accuracy_voted.append(accuracy_voted)
 
   # Print metrics
   print('Test accuracy:', score[ 1 ])
-  print('Test accuracy for Majority Voting System:', accuracy_voted)
-
-  # Print the confusion matrix for Voting System
-  cm = confusion_matrix(voted_truth, voted_prediction)
-  print(cm)
-
   print('Exec period %s' % execPeriod)
 
   gc.collect()
@@ -147,7 +129,6 @@ for execPeriod in range(ExecTimes):
 # Print the statistics
 print("Validation accuracy - %s" % numpy.mean(validation_accuracy))
 print("Test accuracy - %s" % numpy.mean(test_accuracy))
-print("Test accuracy MVS - %s" % numpy.mean(test_accuracy_voted))
 
 # Plot accuracy history
 pyplot.plot(history.history[ 'acc' ])
