@@ -11,11 +11,11 @@ import multiprocessing
 import keras
 import threading
 
-AudioOffset = 15.0
-AudioDurationLimit = 120.0
-SongSamples = 660000
+AudioOffset = 0.0
+AudioDurationLimit = 20.0
+SongSamples = 1320000
 FFTWindowSize = 2048
-HopLength = 512
+HopLength = 128
 
 class Job:
   def __init__( self, filename, genre ):
@@ -42,7 +42,8 @@ class TrainingAudioData(object):
       'metal': 0,
       'populara': 1,
       'reggae': 2,
-      'classical': 3
+      'classical': 3,
+      'folk': 4
     }
 
   """Function used to get the .npy models for the training datafiles.
@@ -100,7 +101,7 @@ class TrainingAudioData(object):
       return None
 
     feature = librosa.feature.melspectrogram(signal[ :SongSamples ], sr = sampling_rate,
-                                             n_fft = FFTWindowSize, hop_length = HopLength).T[:640, ]
+                                             n_fft = FFTWindowSize, hop_length = HopLength).T[:3328, ]
 
     return feature
 
@@ -115,4 +116,4 @@ class TrainingAudioData(object):
       music_data.append(features)
       genre_data.append(job.genre)
 
-      print('Worker %s finished job %s' % (Id, job))      
+      print('Worker %s finished job %s' % (Id, job.filename))      

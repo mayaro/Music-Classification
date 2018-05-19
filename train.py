@@ -9,14 +9,14 @@
 
 """
 
-LearningDatasetLocation = 'C:/Users/murar/MusicClassification/models/'
+LearningDatasetLocation = 'E:/FACULTATE/MusicClassification/models/'
 SoundwavesDataFileLocation = LearningDatasetLocation + 'songs_data.npy'
 GenresDataFileLocation = LearningDatasetLocation + 'genres_data.npy'
 
 SavedModelFileLocation = LearningDatasetLocation + 'model.json'
 SavedWeightsFileLocation = LearningDatasetLocation + 'weights.h5'
 
-ExecTimes = 10
+ExecTimes = 100
 input_shape = (128, 128)
 batch_size = 100
 epochs = 100
@@ -89,9 +89,9 @@ for execPeriod in range(ExecTimes):
 
   # Callback used to stop epoch training if the loss is small enough
   stop_callback = keras.callbacks.EarlyStopping(
-    monitor = 'val_loss',
+    monitor = 'val_acc',
     min_delta = 0,
-    patience = 2,
+    patience = 3,
     verbose = 0,
     mode = 'auto'
   )

@@ -49,7 +49,7 @@ class TrainingModels(object):
     mlp_activation_function = activation_function(fully_connected_2)
     reg = Dropout(0.5)(mlp_activation_function)
 
-    fully_connected_2 = Dense(4, activation = 'softmax')(reg)
+    fully_connected_2 = Dense(5, activation = 'softmax')(reg)
 
     model = Model(inputs = [ inputs ], outputs = [ fully_connected_2 ])
     return model

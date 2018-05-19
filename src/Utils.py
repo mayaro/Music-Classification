@@ -1,8 +1,7 @@
 import numpy as np
-from scipy.stats import mode
 
 # Should be equal to the number of samples
-SplitSize = 5
+SplitSize = 26
 
 '''Split the samples arrays that were passed as arguments into songs.
 
