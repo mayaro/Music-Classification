@@ -6,6 +6,7 @@
 
 import os
 import librosa
+import random
 import numpy
 import multiprocessing
 import keras
@@ -59,18 +60,25 @@ class TrainingAudioData(object):
     Jobs = multiprocessing.Queue()
     workers = []
 
+    temp_files = []
+    genres = []
+
     for genre, _ in self.genres.items():
       for _, _, files in os.walk(self.directory + genre):
         for file_name in files:
           full_file_name = self.directory + genre + '/' + file_name
-          Jobs.put(Job(full_file_name, self.genres[genre]))
 
-          # feature = TrainingAudioData.process_audio_file(full_file_name)
+          temp_files.append(full_file_name)
+          genres.append(self.genres[genre])
 
-          # music_data.append(feature)
-          # genre_data.append(self.genres[genre])
+    temp = list(zip(temp_files, genres))
+    random.shuffle(temp)
+    temp_files, genres = zip(*temp)
 
-          # print('Parsed audio file \'' + full_file_name + '\'.')
+    for idx, val in enumerate(temp_files):
+      Jobs.put(
+        Job(val, genres[idx])
+      )
 
     number_of_cpus = multiprocessing.cpu_count()
     for i in range(number_of_cpus - 1):

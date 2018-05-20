@@ -14,18 +14,18 @@ def worker_processing( Id, Jobs):
     duration = len(song)
     featuredInterval = song[duration / 2 - 10000 : duration / 2 + 10000]
 
-    pathlib.Path('./learning_data/' + job.split('/')[2]).mkdir(parents=True, exist_ok=True)
-    with open('./learning_data/' + '/'.join(job.split('/')[2:]), 'wb') as f:
-      featuredInterval.export(f)
+    pathlib.Path('./learning_data/' + job.split('/')[-2]).mkdir(parents=True, exist_ok=True)
+    with open('./learning_data/' + '/'.join(job.split('/')[-2:]), 'wb') as f:
+      featuredInterval.export(f, parameters=['-q:a', '90'])
 
     print('Worker %s finished job %s' % (Id, job))
 
 Jobs = multiprocessing.Queue()
 workers = []
 
-for _, genres, _ in os.walk('./raw_learning_data'):
+for _, genres, _ in os.walk('X:/Facultate/MusicClassification/raw_learning_data'):
   for genre in genres:
-    for current_path, _, songs in os.walk('./raw_learning_data/' + genre):
+    for current_path, _, songs in os.walk('X:/Facultate/MusicClassification/raw_learning_data/' + genre):
       for song_name in songs:
         full_file_name = current_path + '/' + song_name
         
