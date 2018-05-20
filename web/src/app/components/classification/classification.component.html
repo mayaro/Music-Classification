@@ -1,0 +1,12 @@
+<div class="mc-classification-container">
+
+  <input 
+    class="mc-url-input"
+    [(ngModel)]="url"
+    (keyup.enter)="classify($event)"
+    pattern="^(https?://)?(www.youtube.com|youtu.?be)/.+$"
+    required
+    placeholder="Enter a YouTube URL here"
+    #urlInput="ngModel" />
+
+</div>    

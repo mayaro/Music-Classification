@@ -1,0 +1,31 @@
+div.mc-classification-container {
+  margin-top: 4rem;
+
+  display: flex;
+  align-content: center;
+  justify-content: center;
+}
+
+div.mc-classification-container > input.mc-url-input {
+  font-size: 22px;
+
+  text-indent: 6px;
+  text-align: center;
+  padding: 10px;
+
+  min-width: 10rem;
+  max-width: 45rem;
+  width: 100%;
+  
+  border-width: 1px;
+  border-style: double;
+  border-color: rgba(	170, 0, 0, 0.5 );
+  border-left: none;
+  border-top: none;
+  border-right: none;
+}
+
+div.mc-classification-container > input.mc-url-input:focus {
+  outline: none;
+}
+
