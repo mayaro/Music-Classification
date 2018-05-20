@@ -124,6 +124,10 @@ for execPeriod in range(ExecTimes):
   print('Test accuracy:', score[ 1 ])
   print('Exec period %s' % execPeriod)
 
+  with open(SavedModelFileLocation, "w") as json_model_file:
+    json_model_file.write(model.to_json())
+    model.save_weights(SavedWeightsFileLocation)
+
   gc.collect()
 
 # Print the statistics
@@ -149,9 +153,9 @@ pyplot.legend(['train', 'validation'], loc = 'upper left')
 pyplot.show()
 
 # Save the model
-with open(SavedModelFileLocation, "w") as json_model_file:
-  json_model_file.write(model.to_json())
-  model.save_weights(SavedWeightsFileLocation)
+# with open(SavedModelFileLocation, "w") as json_model_file:
+#   json_model_file.write(model.to_json())
+#   model.save_weights(SavedWeightsFileLocation)
 
 # Free memory at the end of the training
 del soundwaves
