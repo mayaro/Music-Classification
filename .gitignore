@@ -4,3 +4,5 @@ learning_data/
 raw_learning_data/
 .vscode/
 *.npy
+web/src/app/components/Web_files/*
+Web.html

@@ -11,12 +11,22 @@ import numpy
 import multiprocessing
 import keras
 import threading
+import pathlib
+from pydub import AudioSegment
 
 AudioOffset = 0.0
 AudioDurationLimit = 20.0
 SongSamples = 1320000
 FFTWindowSize = 2048
 HopLength = 128
+
+def crop_audio_file(filename):
+  song = AudioSegment.from_file(filename)
+  duration = len(song)
+  
+  featuredInterval = song[duration / 2 - 10000 : duration / 2 + 10000]
+  
+  return featuredInterval  
 
 class Job:
   def __init__( self, filename, genre ):

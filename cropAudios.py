@@ -4,15 +4,15 @@ import threading
 import os
 import pathlib
 
+from src.TrainingAudioData import crop_audio_file
+
 def worker_processing( Id, Jobs):
   while not Jobs.empty():
     job = Jobs.get()
 
     print('Worker %s got job %s' % (Id, job))
     
-    song = AudioSegment.from_file(job)
-    duration = len(song)
-    featuredInterval = song[duration / 2 - 10000 : duration / 2 + 10000]
+    featured_interval = crop_audio_file(job)
 
     pathlib.Path('./learning_data/' + job.split('/')[-2]).mkdir(parents=True, exist_ok=True)
     with open('./learning_data/' + '/'.join(job.split('/')[-2:]), 'wb') as f:
