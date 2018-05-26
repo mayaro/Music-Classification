@@ -20,11 +20,18 @@ SongSamples = 1320000
 FFTWindowSize = 2048
 HopLength = 128
 
-def crop_audio_file(filename):
-  song = AudioSegment.from_file(filename)
-  duration = len(song)
-  
-  featuredInterval = song[duration / 2 - 10000 : duration / 2 + 10000]
+def crop_audio_file(filepath):
+  audio = AudioSegment.from_file(filepath)
+  # 3-second offset
+  duration = len(audio) - 6000
+  # Leave 500 ms on each end
+  hop = int((duration - 1000) / 41)
+
+  audio = audio[500 : duration - 500]
+
+  featuredInterval = AudioSegment.empty()
+  for i in range(1, 41):
+    featuredInterval += audio[hop * i - 250 : hop * i + 250]
   
   return featuredInterval  
 
@@ -74,9 +81,12 @@ class TrainingAudioData(object):
     genres = []
 
     for genre, _ in self.genres.items():
-      for _, _, files in os.walk(self.directory + genre):
+      for current_path, _, files in os.walk(self.directory + genre):
         for file_name in files:
-          full_file_name = self.directory + genre + '/' + file_name
+          if genre not in current_path:
+            continue
+          
+          full_file_name = current_path + '/' + file_name
 
           temp_files.append(full_file_name)
           genres.append(self.genres[genre])

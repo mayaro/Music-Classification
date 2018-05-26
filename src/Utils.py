@@ -28,3 +28,14 @@ def split_songs( inputs, outputs ):
       final_outputs.append(outputs[ index ])
 
   return np.array(final_inputs), np.array(final_outputs)
+
+"""Remove the extension from filenames.
+
+  Args:
+    filename ( string )
+
+  Returns:
+    string: The filename without extension
+"""
+def remove_extension_from_filename(filename):
+  return '.'.join(filename.split('.')[:-1])

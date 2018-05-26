@@ -16,7 +16,7 @@ def worker_processing( Id, Jobs):
 
     pathlib.Path('./learning_data/' + job.split('/')[-2]).mkdir(parents=True, exist_ok=True)
     with open('./learning_data/' + '/'.join(job.split('/')[-2:]), 'wb') as f:
-      featuredInterval.export(f, parameters=['-q:a', '90'])
+      featured_interval.export(f, parameters=['-q:a', '90'])
 
     print('Worker %s finished job %s' % (Id, job))
 

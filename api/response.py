@@ -1,6 +1,3 @@
-from json import dumps as to_json
-from numpy import round
-
 class Response(object):
   
   error = None
@@ -11,9 +8,7 @@ class Response(object):
 
   def __init__(self, error, genres, filename):
     self.error = error
-
-    self.genres = to_json(round(genres, decimals=2).tolist(), separators=(',', ':')) if genres is not None else []
-
+    self.genres = genres
     self.filename = filename
 
   def serialize(self):

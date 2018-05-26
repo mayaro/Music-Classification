@@ -1,15 +1,23 @@
-from __future__ import unicode_literals, division
+from __future__ import unicode_literals
 from flask import Flask, request, jsonify
+from flask_cors import CORS, cross_origin
 from api.response import Response
 from configparser import ConfigParser
 
 from pydub import AudioSegment
 from pytube import YouTube
 from pathlib import Path
+
+from src.Utils import remove_extension_from_filename
+
 import os
 import json
 
 app = Flask(__name__)
+cors = CORS(app)
+
+app.config['CORS-HEADERS'] = 'Content-Type'
+
 model = None
 
 config = ConfigParser()
@@ -18,6 +26,7 @@ config.read('config.ini')
 base_path = config.get('Models', 'BaseDirectory')
 model_path = base_path + config.get('Models', 'ModelPath')
 weights_path = base_path + config.get('Models', 'WeightsPath')
+genre_names = config.get('Models', 'Genres').split(',')
 
 def load_model():
   from tensorflow.python.keras.models import model_from_json
@@ -81,6 +90,7 @@ def print_progress(stream, chunk, filehandle, bytes):
   ), end='\r', flush=True)
 
 @app.route('/classify')
+@cross_origin()
 def index():
   url_param = request.args.get('url')
   
@@ -88,49 +98,76 @@ def index():
     resp = Response('Missing URL param', None).serialize()
     return jsonify(resp), 400
   
-  filename = ''
+  filepath = ''
   featured_interval = None
 
   try: 
     yt = YouTube(url_param)
     yt.register_on_progress_callback(print_progress)
     stream = yt.streams.filter(only_audio=True, adaptive=True).order_by('bitrate').last()
-    filename = TempOutputDir + normalize_filename(stream.default_filename)
     
-    if Path(filename).is_file():
-      print('File {} already there'.format(filename))
+    normalized_filename = normalize_filename(stream.default_filename)
+    filepath = TempOutputDir + normalized_filename
+
+    if Path(filepath).is_file():
+      print('File {} already there'.format(filepath))
     else:
       stream.download(
         output_path=TempOutputDir,
-        filename=''.join(normalize_filename(stream.default_filename).split('.')[:-1])
+        filename=remove_extension_from_filename(normalized_filename)
       )
+      print('\n')
 
-      audio = AudioSegment.from_file(filename)
-      duration = len(audio)
-      featured_interval = audio[duration / 2 - 10000 : duration / 2 + 10000]
-      
-      os.remove(filename)
-      with open(filename, 'wb') as f:
-        featured_interval.export(f, parameters=['-q:a', '90'])
+      audio = AudioSegment.from_file(filepath)
+      # 3-second offset
+      duration = len(audio) - 6000
+      # Leave 500 ms on each end
+      hop = int((duration - 1000) / 41)
 
-    song_samples = process_audio_file(filename)
+      audio = audio[500 : duration - 500]
+      # temp = audio[hop - 500 : hop + 500]
+
+      samples = AudioSegment.empty()
+      for i in range(1, 41):
+        newSample = audio[hop * i - 250 : hop * i + 250]
+        samples += newSample
+
+      os.remove(filepath)
+      with open(filepath, 'wb') as f:
+        samples.export(f, parameters=['-q:a', '90'])
+
+    song_samples = process_audio_file(filepath)
     formatted_song_samples = np.stack(np.split(song_samples, 26, axis=0), axis=0)
 
     global graph
     with graph.as_default():
       prediction = model.predict(formatted_song_samples, verbose = 1)
 
-    score = np.around(np.mean(prediction, axis=0), decimals=1)
+    score = np.around(np.mean(prediction, axis=0), decimals=4)
   except Exception as e:
-    resp = Response('{0}'.format(e), None, filename).serialize()
+    resp = Response('{0}'.format(e), None, filepath).serialize()
     return jsonify(resp), 500  
 
-  return jsonify(Response(None, score, '.'.join(filename.split('.')[:-1])).serialize())
+  response = Response(
+    None,
+    { genre_names[i]: '%.2f' % score[i] for i in range(len(genre_names)) },
+    remove_extension_from_filename(normalized_filename)
+  ).serialize()
+  return jsonify(response)
 
 
+"""
+  The following code will only be run on the main thread
+  as otherwise Keras will try to load the model each time this module is accessed.
+
+  Also, tf.get_default_graph is called because of incompatibilities between Keras's Tensorflow backend
+  and the asyncrony that webservers use.
+
+  Also, Flask cannot run the web server in debug as it runs the web.py script twice
+  and this makes tensorflow fail as it is trying to create 2 CUDA devices.
+"""
 if __name__ == '__main__':
   model = load_model()
-
   graph = tf.get_default_graph()
 
   app.run(host='0.0.0.0', port=80)
