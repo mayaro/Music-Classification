@@ -1,4 +1,6 @@
 import { Component } from '@angular/core';
+import { ClassificationService } from '../../services/classification.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'mc-classification',
@@ -7,6 +9,14 @@ import { Component } from '@angular/core';
 })
 export class ClassificationComponent {
   
+  public classification$: Observable<Object>;
+
+  constructor(
+    private classificationService: ClassificationService
+  ) {
+    this.classificationService = classificationService;
+  }
+
   private _url : string;
 
   public get url() : string {
@@ -17,8 +27,10 @@ export class ClassificationComponent {
     this._url = newUrl;
   }
 
-  public classify($event: KeyboardEvent) {
+  public async classify($event: KeyboardEvent) {
     console.log(this);
+    this.classification$ = await this.classificationService.classify(this._url);
+    console.log(this.classification$)
   }
   
 } 
