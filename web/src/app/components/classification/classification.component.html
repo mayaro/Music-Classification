@@ -10,16 +10,18 @@
     #urlInput="ngModel" />
   
   <div class="classification-results-container">
-    <div *ngIf="classification$ | async as classification; else loading">
+    <div *ngIf="(classification$ | async) as classification; else errorOrLoading">
       <h4> {{classification.filename}} </h4>
       <p *ngFor="let genre of classification.genres | iterateGenres:'order-descending'">
         {{genre.name}} -> {{genre.weight}}
       </p>
     </div>
-    <ng-template #loading>
-      <div>
-        <p> Loading... </p>
+    <ng-template #errorOrLoading>
+      <div *ngIf="!(loadingError$ | async)">
+        <div *ngIf="pristine === false">
+          <p> Loading... </p>
+        </div> 
       </div>
-    </ng-template> 
+    </ng-template>
   </div>
 </div>    

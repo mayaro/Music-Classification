@@ -1,6 +1,9 @@
 import { Component } from '@angular/core';
+import { Observable, Subject, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+import { ToastrService } from 'ngx-toastr';
 import { ClassificationService } from '../../services/classification.service';
-import { Observable } from 'rxjs';
+import { ClassificationModel } from '../../models/classification.model';
 
 @Component({
   selector: 'mc-classification',
@@ -11,8 +14,15 @@ export class ClassificationComponent {
   
   public classification$: Observable<Object>;
 
+  public pristine: Boolean = true;
+
+  public loadingError$ = new Subject<Boolean>();
+  
+  public loadingErrorMessage: string;
+
   constructor(
-    private classificationService: ClassificationService
+    private classificationService: ClassificationService,
+    private toastr: ToastrService
   ) {
     this.classificationService = classificationService;
   }
@@ -27,10 +37,21 @@ export class ClassificationComponent {
     this._url = newUrl;
   }
 
-  public async classify($event: KeyboardEvent) {
-    console.log(this);
-    this.classification$ = await this.classificationService.classify(this._url);
-    console.log(this.classification$)
+  public classify($event: KeyboardEvent) {
+    this.pristine = false;
+    this.classification$ = null;
+
+    this.classification$ = this.classificationService.classify(this._url).pipe(
+      catchError((error: any) => {
+        this.toastr.error(`
+          ${error.status} ${error.statusText}:
+          Error classifying song. Please check console for full error.
+        `, null, {positionClass: 'toast-bottom-right'});
+        console.error(error);
+        this.loadingError$.next(false);
+        return of();
+      })
+    );
   }
   
 } 
