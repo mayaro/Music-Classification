@@ -1,0 +1,15 @@
+<div class="mc-genres-chart-container">
+
+  <ngx-charts-pie-chart 
+    [view]="view"
+    [results]="results"
+    [explodeSlices]="explodeSlices"
+    [labels]="showLabels"
+    [tooltipText]="formatTooltip"
+    [doughnut]="doughnut"
+    [gradient]="gradient"
+    [arcWidth]="0.2"
+    (select)="onSelect($event)">
+  </ngx-charts-pie-chart>
+
+</div>

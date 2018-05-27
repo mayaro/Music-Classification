@@ -11,10 +11,11 @@
   
   <div class="classification-results-container">
     <div *ngIf="(classification$ | async) as classification; else errorOrLoading">
-      <h4> {{classification.filename}} </h4>
-      <p *ngFor="let genre of classification.genres | iterateGenres:'order-descending'">
-        {{genre.name}} -> {{genre.weight}}
-      </p>
+      <h3> {{classification.filename}} </h3>
+
+      <mc-genres-chart [results]="classification.genres | iterateGenres:'order-descending'">
+      </mc-genres-chart>
+
     </div>
     <ng-template #errorOrLoading>
       <div *ngIf="!(loadingError$ | async)">
@@ -24,4 +25,5 @@
       </div>
     </ng-template>
   </div>
+  
 </div>    
