@@ -40,7 +40,7 @@ class Job:
     self.filename = filename
     self.genre = genre
 
-class TrainingAudioData(object):
+class TrainingData(object):
   """Class used for creating and handling audio data
 
     Args:
@@ -104,7 +104,7 @@ class TrainingAudioData(object):
     for i in range(number_of_cpus - 1):
       print('Starting worker %s' % i)
 
-      p = threading.Thread( target=TrainingAudioData.worker_processing, args=(i, Jobs, music_data, genre_data) )
+      p = threading.Thread( target=TrainingData.worker_processing, args=(i, Jobs, music_data, genre_data) )
       workers.append(p)
 
       p.start()
@@ -139,7 +139,7 @@ class TrainingAudioData(object):
       job = Jobs.get()
 
       print('Worker %s got job %s' % (Id, job.filename))
-      features = TrainingAudioData.process_audio_file(job.filename)
+      features = TrainingData.process_audio_file(job.filename)
 
       music_data.append(features)
       genre_data.append(job.genre)
