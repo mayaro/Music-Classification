@@ -64,18 +64,18 @@ FFTWindowSize = 2048
 HopLength = 128
 
 def process_audio_file( file_path ):
-    signal, sampling_rate = librosa.load(file_path,
-                                         offset = AudioOffset,
-                                         duration = AudioDurationLimit)
+  signal, sampling_rate = librosa.load(file_path,
+                                        offset = AudioOffset,
+                                        duration = AudioDurationLimit)
 
-    if signal.size == 0:
-      print('File ' + file_path + ' could not be loaded.')
-      return None
+  if signal.size == 0:
+    print('File ' + file_path + ' could not be loaded.')
+    return None
 
-    feature = librosa.feature.melspectrogram(signal[ :SongSamples ], sr = sampling_rate,
-                                             n_fft = FFTWindowSize, hop_length = HopLength).T[:3328, ]
+  feature = librosa.feature.melspectrogram(signal[ :SongSamples ], sr = sampling_rate,
+                                            n_fft = FFTWindowSize, hop_length = HopLength).T[:3328, ]
 
-    return feature
+  return feature
 
 def normalize_filename(filename):
   return filename.replace('  ', ' ').strip()
@@ -98,8 +98,12 @@ def index():
     normalized_filename = normalize_filename(stream.default_filename)
     filepath = TempOutputDir + normalized_filename
 
-    if Path(filepath).is_file():
+    formatted_song_samples = None
+
+    if Path(filepath + '.npy').is_file():
       print('File {} already there'.format(filepath))
+
+      formatted_song_samples = np.load(filepath + '.npy')
     else:
       download(stream, os.path.join(TempOutputDir, normalized_filename))
 
@@ -118,9 +122,12 @@ def index():
       with open(filepath, 'wb') as f:
         samples.export(f, parameters=['-q:a', '90'])
 
-    song_samples = process_audio_file(filepath)
+      song_samples = process_audio_file(filepath)
 
-    formatted_song_samples = np.stack(np.split(song_samples, 26, axis=0), axis=0)
+      formatted_song_samples = np.stack(np.split(song_samples, 26, axis=0), axis=0)
+      
+      os.remove(filepath)
+      np.save(filepath, formatted_song_samples)
 
     global graph
     with graph.as_default():
@@ -128,6 +135,7 @@ def index():
 
     score = np.around(np.mean(prediction, axis=0), decimals=4)
   except Exception as e:
+    print(e, flush=True)
     resp = Response('{0}'.format(e), None, filepath).serialize()
     return jsonify(resp), 500  
 
