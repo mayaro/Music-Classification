@@ -19,7 +19,7 @@ export class ClassificationService {
    */
   classify(url: string): Observable<Object> {
     
-    return this.http.get<ClassificationModel>(url);
+    return this.http.get<ClassificationModel>(`http://music-classification/api/classify?url=${url}`);
 
   }
 

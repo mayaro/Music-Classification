@@ -5,3 +5,7 @@ html {
 body {
   margin-top: 2rem;
 }
+
+text.pie-label {
+  font-size: 1.1rem ;
+}
