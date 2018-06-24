@@ -6,3 +6,8 @@ raw_learning_data/
 *.npy
 web/src/app/components/Web_files/*
 Web.html
+logs/
+docs/
+shots/
+package-lock.json
+*.docx
